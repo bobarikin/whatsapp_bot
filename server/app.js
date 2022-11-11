@@ -2,6 +2,8 @@ import express from 'express'
 import cors from 'cors'
 import qrcode from 'qrcode-terminal'
 import pkg from 'whatsapp-web.js'
+import mongoose from 'mongoose'
+import { MONGODB_URI } from './config.js'
 
 const app = express()
 const { Client, LocalAuth } = pkg
@@ -26,7 +28,7 @@ client.on('qr', (qr) => {
 })
 
 client.on('ready', () => {
-  console.log('Client is ready!')
+  console.log('🚀 Client is ready!')
 })
 
 client.initialize()
@@ -40,6 +42,14 @@ app.post('/widget', async (req, res) => {
     message: 'success',
   })
 })
+
+// connect to BD
+try {
+  mongoose.connect(MONGODB_URI)
+  console.log('🚀 Connected');
+} catch (e) {
+  console.log(e)
+}
 
 app.listen(5000, () => {
   console.log(`🚀 Server has been started...`)
