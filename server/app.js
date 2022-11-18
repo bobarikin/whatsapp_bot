@@ -9,54 +9,54 @@ import auth from './middleware/auth.middleware.js'
 import User from './models/User.js'
 
 const app = express()
+// объекты из библиотеки
 const { Client, LocalAuth, Buttons } = pkg
 
 app.use(cors())
 
 app.use(express.json())
 
+// клиент для подключения сессии
 const client = new Client({
   authStrategy: new LocalAuth(),
 })
 
 app.use('/api', authRouter)
 
+// получает id чата по названию
 // эту функцию нужно вынести в файл бота
 const getChatId = async (chatName) => {
+  // получение всех чатов
   let chats = await client.getChats()
   let chat = chats.find((chat) => chat.name === chatName)
   return chat.id._serialized
 }
 
+// генерауия qr кода
 client.on('qr', (qr) => {
   qrcode.generate(qr, { small: true })
 })
 
+// событие коннекта
 client.on('ready', () => {
   console.log('🚀 Client is ready!')
 })
 
+// инициализация клиента
 client.initialize()
 
-// это нужно будет вынести в роутинг
-// app.post('/widget', async (req, res) => {
-//   const { message } = req.body
-//   let chatId = await getChatId('whatsapp-bot')
-//   client.sendMessage(chatId, message)
-//   res.status(201).json({
-//     message: 'success',
-//   })
-// })
-
+// апи обработки сообщений
+// вынести в роутинг
 app.post('/message', auth, async (req, res) => {
   try {
     const { message } = req.body
 
     const user = await User.findOne({ _id: req.user.userId})
 
-    const btn = new Buttons('body')
+    // const btn = new Buttons('body')
 
     let chatId = await getChatId('whatsapp-bot')
+    // отправка сообщения в чат
     client.sendMessage(chatId, `${user.userName} ${user.userPhone}`)
     // client.sendMessage(chatId, btn)
     client.sendMessage(chatId, message)

@@ -2,27 +2,9 @@ import express from 'express'
 import User from '../models/User.js'
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from '../config.js'
-import auth from '../middleware/auth.middleware.js'
 import bcrypt from 'bcrypt'
 
 const authRouter = express.Router()
-
-// /api/message
-// authRouter.post('/message', auth, async (req, res) => {
-//   try {
-//     const { message } = req.body
-//   let chatId = await getChatId('whatsapp-bot')
-//   client.sendMessage(chatId, message)
-//   res.status(201).json({
-//     message: 'success',
-//   })
-//   } catch (error) {
-//     res.status(500).json({
-//       message: 'Что-то пошло не так, попробуйте снова',
-//       type: 'error',
-//     })
-//   }
-// })
 
 // /api/auth/signin
 authRouter.post('/auth/signin', async (req, res) => {
