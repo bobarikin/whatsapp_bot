@@ -7,13 +7,17 @@
     width: 150px;
     height: 100px;
     position: fixed;
-    bottom: 0;
+    bottom: 30px;
     right: 0;
 }
 
 .widget__form {
-    height: 100%;
+    height: auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
+}
+
+.hidden {
+    display: none;
 }
