@@ -53,7 +53,7 @@ async function btnAuthHandler() {
 
 $btn.addEventListener('click', buttonHandler)
 
-$input.addEventListener('change', buttonHandler)
+// $input.addEventListener('change', buttonHandler)
 
 $btn_auth.addEventListener('click', btnAuthHandler)
 

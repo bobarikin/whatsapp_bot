@@ -53,13 +53,12 @@ app.post('/message', auth, async (req, res) => {
 
     const user = await User.findOne({ _id: req.user.userId})
 
-    // const btn = new Buttons('body')
-
-    let chatId = await getChatId('whatsapp-bot')
+    let chatId = await getChatId('Widget')
+    const btn = new Buttons(message, [{body: 'Ответить'}], user.userName, user.userPhone)
     // отправка сообщения в чат
-    client.sendMessage(chatId, `${user.userName} ${user.userPhone}`)
-    // client.sendMessage(chatId, btn)
-    client.sendMessage(chatId, message)
+    // client.sendMessage(chatId, `${user.userName} ${user.userPhone}`)
+    client.sendMessage(chatId, btn)
+    // client.sendMessage(chatId, message)
     res.status(201).json({
       message: 'success',
     })
