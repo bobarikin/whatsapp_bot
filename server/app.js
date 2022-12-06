@@ -10,7 +10,7 @@ import User from './models/User.js'
 
 const app = express()
 // объекты из библиотеки
-const { Client, LocalAuth, Buttons, InterfaceController } = pkg
+const { Client, LocalAuth, Buttons } = pkg
 
 app.use(cors())
 
@@ -28,7 +28,6 @@ app.use('/api', authRouter)
 const getChatId = async (chatName) => {
   // получение всех чатов
   let chats = await client.getChats()
-  // console.log('###ALL CHATS', chats)
   let chat = chats.find((chat) => chat.name === chatName)
   return chat?.id?._serialized ?? 0
 }
@@ -38,41 +37,38 @@ client.on('qr', (qr) => {
   qrcode.generate(qr, { small: true })
 })
 
-client.on('authenticated', () => {
-  console.log('AUTHENTICATED');
-});
-
-client.on('auth_failure', msg => {
-  // Fired if session restore was unsuccessful
-  console.error('AUTHENTICATION FAILURE', msg);
-});
-
-
 // событие коннекта
 client.on('ready', () => {
   console.log('🚀 Client is ready!')
 })
 
-// обработка события нажатия кнопки ответа
 client.on('message', async (msg) => {
+  console.log('###msg', msg)
   // обработка события нажатия кнопки ответа
   if (msg.type == 'buttons_response') {
     // номер телефона клиента
     const widgetUser = {
       phone: msg._data?.quotedMsg?.footer,
-      name: msg._data?.quotedMsg?.title
+      name: msg._data?.quotedMsg?.title,
     }
     const broker = msg._data?.id?.participant
     // чек зареган ли юзер в ватсап
     let isRegistredUser = await client.getNumberId(widgetUser.phone)
+
     if (isRegistredUser) {
-      const groupParticipants = new Array(msg.to, broker, isRegistredUser._serialized)
+      const groupParticipants = new Array(
+        msg.to,
+        broker,
+        isRegistredUser._serialized
+      )
       // нужно чекнуть есть ли с ним чат
-      let chat = await getChatId(widgetUser.phone)
+      let chat = await getChatId(widgetUser.phone) // кастомная ф-я ретёрник ид чата по номеру
       // если чата нет, создаём новый
       if (!chat) {
-        await client.createGroup(widgetUser.phone, groupParticipants)
+        chat = await client.createGroup(widgetUser.phone, groupParticipants)
       }
+      console.log('###chat', chat)
+      client.sendMessage(msg.from, `${msg._data?.notifyName} взял в работу ${widgetUser.name}`)
     } else {
       console.log('User have not whatsapp :(')
     }
@@ -95,14 +91,22 @@ app.post('/message', auth, async (req, res) => {
     const user = await User.findOne({ _id: req.user.userId })
 
     let chatId = await getChatId('Widget')
+
     const btn = new Buttons(
       message,
-      [{ body: 'Ответить' }],
+      [
+        {
+          body: 'Ответить',
+        },
+      ],
       user.userName,
       user.userPhone
     )
+
     // отправка сообщения в чат
+    console.log('###btn', btn)
     client.sendMessage(chatId, btn)
+
     res.status(201).json({
       message: 'success',
     })
