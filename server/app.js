@@ -43,7 +43,7 @@ client.on('ready', () => {
 })
 
 client.on('message', async (msg) => {
-  console.log('###msg', msg)
+  // console.log('###msg', msg)
   // обработка события нажатия кнопки ответа
   if (msg.type == 'buttons_response') {
     // номер телефона клиента
@@ -66,11 +66,32 @@ client.on('message', async (msg) => {
       // если чата нет, создаём новый
       if (!chat) {
         chat = await client.createGroup(widgetUser.phone, groupParticipants)
+        // проверить отправку уведомления для нового чата
       }
-      console.log('###chat', chat)
-      client.sendMessage(msg.from, `${msg._data?.notifyName} взял в работу ${widgetUser.name}`)
+      // console.log('###chat', chat)
+      client.sendMessage(
+        msg.from,
+        `${msg._data?.notifyName} взял в работу ${widgetUser.name}`
+      )
     } else {
       console.log('User have not whatsapp :(')
+    }
+  }
+})
+
+client.on('message_create', async (msg) => {
+  console.log('###msg', msg)
+  // if (msg.type === 'buttons_response') {
+  //   msg.delete(true)
+  // }
+  if (msg?.id?.fromMe === false) {
+    console.log('#81', msg)
+    const quotedMsg = await msg.getQuotedMessage()
+    console.log('q' ,quotedMsg)
+    if (quotedMsg) {
+      quotedMsg.delete(true)
+    } else {
+      msg.reply('I can only delete my own messages')
     }
   }
 })
@@ -104,7 +125,6 @@ app.post('/message', auth, async (req, res) => {
     )
 
     // отправка сообщения в чат
-    console.log('###btn', btn)
     client.sendMessage(chatId, btn)
 
     res.status(201).json({
