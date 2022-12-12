@@ -7,6 +7,7 @@ import { MONGODB_URI } from './config.js'
 import authRouter from './routes/auth.routes.js'
 import auth from './middleware/auth.middleware.js'
 import User from './models/User.js'
+import e from 'express'
 
 const app = express()
 // объекты из библиотеки
@@ -80,20 +81,20 @@ client.on('message', async (msg) => {
 })
 
 client.on('message_create', async (msg) => {
-  console.log('###msg', msg)
+  // console.log('###msg', msg)
   // if (msg.type === 'buttons_response') {
   //   msg.delete(true)
   // }
-  if (msg?.id?.fromMe === false) {
-    console.log('#81', msg)
-    const quotedMsg = await msg.getQuotedMessage()
-    console.log('q' ,quotedMsg)
-    if (quotedMsg) {
-      quotedMsg.delete(true)
-    } else {
-      msg.reply('I can only delete my own messages')
-    }
-  }
+  // if (msg?.id?.fromMe === false) {
+  //   console.log('#81', msg)
+  //   const quotedMsg = await msg.getQuotedMessage()
+  //   console.log('q' ,quotedMsg)
+  //   if (quotedMsg) {
+  //     quotedMsg.delete(true)
+  //   } else {
+  //     msg.reply('I can only delete my own messages')
+  //   }
+  // }
 })
 
 try {
@@ -108,28 +109,37 @@ try {
 app.post('/message', auth, async (req, res) => {
   try {
     const { message } = req.body
-
     const user = await User.findOne({ _id: req.user.userId })
 
-    let chatId = await getChatId('Widget')
+    // если час с клиентом есть сообщения отправляем туда
+    const chatIdWithClient = await getChatId(user.userPhone)
+    console.log('###chatIdWithClient', chatIdWithClient)
+    if (chatIdWithClient) {
+      client.sendMessage(chatIdWithClient, message)
+      return res.status(201).json({
+        message: 'success',
+      })
+    } else {
+      let chatId = await getChatId('Widget')
 
-    const btn = new Buttons(
-      message,
-      [
-        {
-          body: 'Ответить',
-        },
-      ],
-      user.userName,
-      user.userPhone
-    )
+      const btn = new Buttons(
+        message,
+        [
+          {
+            body: 'Ответить',
+          },
+        ],
+        user.userName,
+        user.userPhone
+      )
 
-    // отправка сообщения в чат
-    client.sendMessage(chatId, btn)
+      // отправка сообщения в чат
+      client.sendMessage(chatId, btn)
 
-    res.status(201).json({
-      message: 'success',
-    })
+      return res.status(201).json({
+        message: 'success',
+      })
+    }
   } catch (error) {
     res.status(500).json({
       message: 'Что-то пошло не так, попробуйте снова',
