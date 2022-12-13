@@ -7,7 +7,9 @@ import { MONGODB_URI } from './config.js'
 import authRouter from './routes/auth.routes.js'
 import auth from './middleware/auth.middleware.js'
 import User from './models/User.js'
-import e from 'express'
+import { Server } from 'socket.io'
+import { createServer } from 'http'
+import onConnection from './socket_io/onConnection.js'
 
 const app = express()
 // объекты из библиотеки
@@ -44,9 +46,8 @@ client.on('ready', () => {
 })
 
 client.on('message', async (msg) => {
-  // console.log('###msg', msg)
   // обработка события нажатия кнопки ответа
-  if (msg.type == 'buttons_response') {
+  if (msg.type === 'buttons_response') {
     // номер телефона клиента
     const widgetUser = {
       phone: msg._data?.quotedMsg?.footer,
@@ -69,7 +70,7 @@ client.on('message', async (msg) => {
         chat = await client.createGroup(widgetUser.phone, groupParticipants)
         // проверить отправку уведомления для нового чата
       }
-      // console.log('###chat', chat)
+
       client.sendMessage(
         msg.from,
         `${msg._data?.notifyName} взял в работу ${widgetUser.name}`
@@ -78,23 +79,6 @@ client.on('message', async (msg) => {
       console.log('User have not whatsapp :(')
     }
   }
-})
-
-client.on('message_create', async (msg) => {
-  // console.log('###msg', msg)
-  // if (msg.type === 'buttons_response') {
-  //   msg.delete(true)
-  // }
-  // if (msg?.id?.fromMe === false) {
-  //   console.log('#81', msg)
-  //   const quotedMsg = await msg.getQuotedMessage()
-  //   console.log('q' ,quotedMsg)
-  //   if (quotedMsg) {
-  //     quotedMsg.delete(true)
-  //   } else {
-  //     msg.reply('I can only delete my own messages')
-  //   }
-  // }
 })
 
 try {
@@ -113,7 +97,7 @@ app.post('/message', auth, async (req, res) => {
 
     // если час с клиентом есть сообщения отправляем туда
     const chatIdWithClient = await getChatId(user.userPhone)
-    console.log('###chatIdWithClient', chatIdWithClient)
+
     if (chatIdWithClient) {
       client.sendMessage(chatIdWithClient, message)
       return res.status(201).json({
@@ -156,6 +140,24 @@ try {
   console.log(e)
 }
 
-app.listen(5000, () => {
+const server = createServer(app)
+
+const io = new Server(server, {
+  cors: '*',
+  serveClient: false,
+})
+
+io.on('connection', (socket) => {
+  console.log('user connected')
+
+  client.on('message', async (msg) => {
+    if (msg.type === 'chat') {
+      socket.emit('message', msg.body)
+    }
+  })
+})
+
+server.listen(5000, () => {
   console.log(`🚀 Server has been started...`)
 })
+ 

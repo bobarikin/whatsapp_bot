@@ -1,3 +1,5 @@
+const socket = io('ws://127.0.0.1:5000')
+
 const $btn = document.querySelector('.btn_js')
 const $form = document.querySelector('.form_js')
 const $input = document.querySelector('.input_js')
@@ -7,13 +9,25 @@ const $btn_auth = document.querySelector('.btn_auth_js')
 const $name = document.querySelector('.name_js')
 const $phone = document.querySelector('.phone_js')
 const $password = document.querySelector('.password_js')
+const $messages = document.querySelector('.messages')
+
+socket.on('connect', () => {
+  console.log('connetced')
+})
+
+socket.on('message', (msg) => {
+  console.log(msg)
+  const message = document.createElement('p')
+  message.innerText = msg
+  $messages.append(message)
+})
 
 async function buttonHandler() {
   let response = await fetch('http://localhost:5000/message', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('token')}` 
+      Authorization: `Bearer ${localStorage.getItem('token')}`,
     },
     mode: 'cors',
     body: JSON.stringify({
